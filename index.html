@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Star Sports 2 HD</title>
+  <title>Star Sports Hindi HD</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
@@ -160,18 +160,28 @@
           'spacer', 'language', 'captions', 'picture_in_picture',
           'quality', 'fullscreen'
         ],
-        volumeBarColors: { base: 'rgba(63, 187, 1, 1)', level: 'rgb(255, 69, 0)' },
-        seekBarColors: { base: 'rgb(41, 41, 163)', buffered: 'rgb(35, 99, 3)', played: 'rgba(63, 187, 1, 1)' }
+        volumeBarColors: {
+          base: 'rgba(63, 187, 1, 1)',
+          level: 'rgb(255, 69, 0)'
+        },
+        seekBarColors: {
+          base: 'rgb(41, 41, 163)',
+          buffered: 'rgb(35, 99, 3)',
+          played: 'rgba(63, 187, 1, 1)'
+        }
       });
 
-      /********** Player stream setup from Star Tamil **********/
+      /********** DRM and Stream **********/
       let drmConfig = {
-        clearKeys: { "d0d750ebd52b5756aa7fb833f61ceece": "4ae62a20c030c918aad24193c1dda229" }
+        clearKeys: {
+          "400131994b445d8c8817202248760fda": "2d56cb6f07a75b9aff165d534ae2bfc4"
+        }
       };
 
-      let cookieHeader = "__hdnea__=st=1760011230~exp=1760097630~acl=/*~hmac=2ed54022760d33618dcc7b2fd8497ddf82be3023565ad88ab26fca0a78323423";
-      let streamUrl = "https://jiotvmblive.cdn.jio.com/bpk-tv/Star_Sports_1_Tamil_BTS/output/index.mpd";
+      let cookieHeader = "__hdnea__=st=1760054439~exp=1760140839~acl=/*~hmac=832fd13e5b3eea964aab995dcd2bb50326b83610249f2cf0a9e182d2dd2cff73";
+      let streamUrl = "https://jiotvmblive.cdn.jio.com/bpk-tv/Star_Sports_HD1_Hindi_BTS/output/index.mpd";
 
+      /********** Dynamic Cookie Fetch **********/
       try {
         const response = await fetch('https://raw.githubusercontent.com/alex4528/m3u/refs/heads/main/jstar.m3u');
         const m3uText = await response.text();
@@ -182,7 +192,9 @@
             for (let j = i - 1; j >= 0; j--) {
               if (lines[j].startsWith('#EXTHTTP:')) {
                 const cookieMatch = lines[j].match(/"cookie":"([^"]+)"/);
-                if (cookieMatch) cookieHeader = cookieMatch[1];
+                if (cookieMatch) {
+                  cookieHeader = cookieMatch[1];
+                }
                 break;
               }
             }
@@ -193,6 +205,7 @@
         console.error('Failed to fetch M3U:', error);
       }
 
+      /********** Configure Player **********/
       player.configure({
         drm: drmConfig,
         streaming: {
@@ -208,19 +221,23 @@
         manifest: { retryParameters: { timeout: 8000, maxAttempts: 3 } }
       });
 
+      /********** Add Request Headers **********/
       player.getNetworkingEngine().registerRequestFilter((type, request) => {
         request.headers['Referer'] = 'https://www.jiotv.com/';
         request.headers['User-Agent'] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
         request.headers['Cookie'] = cookieHeader;
 
-        if ((type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-             type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
-            request.uris[0] && !request.uris[0].includes('__hdnea__=')) {
+        if (
+          (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+           type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+          request.uris[0] && !request.uris[0].includes('__hdnea__=')
+        ) {
           const separator = request.uris[0].includes('?') ? '&' : '?';
           request.uris[0] += separator + cookieHeader;
         }
       });
 
+      /********** Load Stream **********/
       try {
         await player.load(streamUrl);
       } catch (error) {
