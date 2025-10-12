@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Star Sports Hindi HD</title>
+  <title>Star Sports 1 Tamil</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
@@ -110,7 +110,7 @@
 
   <!-- Video Player -->
   <div class="shaka-video-container" data-shaka-player>
-    <video autoplay playsinline preload="metadata" poster=""></video>
+    <video autoplay playsinline preload="metadata" poster="https://raw.githubusercontent.com/hardiksoni85555-max/images/refs/heads/main/open%20link%20in%20chrome.png"></video>
   </div>
 
   <script>
@@ -171,14 +171,14 @@
         }
       });
 
-      /********** DRM and Stream **********/
+      /********** DRM and Stream Config **********/
       let drmConfig = {
         clearKeys: {
           "d0d750ebd52b5756aa7fb833f61ceece": "4ae62a20c030c918aad24193c1dda229"
         }
       };
 
-      let cookieHeader = "__hdnea__=st=1760187629~exp=1760274029~acl=/*~hmac=3d0cc86638d3b0c748af750132c0d614c02fc6daca2a2847ea2fa87c32a67d81";
+      let cookieHeader = "__hdnea__=st=1760256032~exp=1760342432~acl=/*~hmac=0c12baaff4a955ce156464ff79fbc191a3756940448a435038e0142f266ed9da";
       let streamUrl = "https://jiotvmblive.cdn.jio.com/bpk-tv/Star_Sports_1_Tamil_BTS/output/index.mpd";
 
       /********** Dynamic Cookie Fetch **********/
@@ -240,6 +240,7 @@
       /********** Load Stream **********/
       try {
         await player.load(streamUrl);
+        console.log('Stream loaded successfully');
       } catch (error) {
         console.error('Load error:', error);
       }
