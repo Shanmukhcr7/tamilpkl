@@ -89,102 +89,41 @@
   
 
   <script>
-    /*******************************
-     * Initialization & Utilities
-     *******************************/
-    // Theme: persist in localStorage
-    (function(){
-      const stored = localStorage.getItem('site-theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', stored);
-    })();
+document.addEventListener('DOMContentLoaded', () => {
+  const viewerCountEl = document.getElementById('viewerCount');
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', cur);
-      localStorage.setItem('site-theme', cur);
-    });
+  try {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    let wsUrl;
 
-    // simple mute toggle to complement Shaka's controls
-    const muteBtn = document.getElementById('muteBtn');
-    const videoEl = document.getElementById('playerVideo');
-    muteBtn.addEventListener('click', () => {
-      if (!videoEl) return;
-      videoEl.muted = !videoEl.muted;
-      muteBtn.textContent = videoEl.muted ? 'Unmute' : 'Mute';
-    });
+    if (window.location.hostname === 'localhost') {
+      // Local testing
+      wsUrl = `${protocol}://localhost:3000`;
+    } else {
+      // Deployed environment (same host as page)
+      wsUrl = `${protocol}://${window.location.host}`;
+    }
 
-    /*******************************
-     * WebSocket Viewer Count
-     *******************************/
-    (function setupWS(){
-      const viewerCountEl = document.getElementById('viewerCount');
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => console.log('✅ WebSocket connected:', wsUrl);
+    ws.onmessage = (event) => {
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        // Uses same host; if you use custom wss, replace window.location.host with your server
-        const ws = new WebSocket(`${protocol}://${window.location.host}`);
-
-        ws.onmessage = (ev) => {
-          try{
-            const data = JSON.parse(ev.data);
-            if (data && data.type === 'viewerCount' && typeof data.count === 'number') {
-              viewerCountEl.textContent = `Viewers: ${data.count}`;
-            }
-          }catch(e){ console.error('WS parse error', e) }
-        };
-        ws.onopen = () => console.log('Viewer WS connected');
-        ws.onerror = (e) => console.warn('Viewer WS error', e);
+        const data = JSON.parse(event.data);
+        if (data.type === 'viewerCount') {
+          viewerCountEl.textContent = `Viewers: ${data.count}`;
+        }
       } catch (e) {
-        console.warn('Viewer WS not available', e);
+        console.error('WS parse error', e);
       }
-    })();
-  </script>
-
-  <script>
-    /**************************************
-     * Chrome check + modal logic (graceful)
-     **************************************/
-    document.addEventListener('DOMContentLoaded', async () => {
-      const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-      const chromeModal = document.getElementById('chromeModal');
-      const closeChrome = document.getElementById('closeChrome');
-
-      if (!isChrome) {
-        // Show chrome modal but allow user to continue
-        chromeModal.classList.remove('hidden');
-        chromeModal.setAttribute('aria-hidden', 'false');
-      }
-
-      closeChrome.addEventListener('click', () => {
-        chromeModal.classList.add('hidden');
-        chromeModal.setAttribute('aria-hidden', 'true');
-      });
-
-      // Show Telegram modal briefly if not dismissed
-      const telegramModal = document.getElementById('telegramModal');
-      const closeButton = document.getElementById('closeButton');
-      const joinLink = document.getElementById('joinLink');
-
-      function hideTelegram() {
-        telegramModal.classList.add('hidden');
-        telegramModal.setAttribute('aria-hidden', 'true');
-      }
-      // show it once per session (you can adjust logic)
-      const shown = sessionStorage.getItem('tgShown');
-      if (!shown) {
-        telegramModal.classList.remove('hidden');
-        telegramModal.setAttribute('aria-hidden', 'false');
-        sessionStorage.setItem('tgShown', '1');
-      }
-
-      closeButton.addEventListener('click', (e) => { e.preventDefault(); hideTelegram(); });
-      joinLink.addEventListener('click', () => { hideTelegram(); });
-      telegramModal.addEventListener('click', (e) => { if (e.target === telegramModal) hideTelegram(); });
-      document.addEventListener('keydown', (e) => { if ((e.key === 'Escape' || e.key === 'Esc') && !telegramModal.classList.contains('hidden')) hideTelegram(); });
-
-      // Auto hide after 10s (if still visible)
-      setTimeout(() => { if (telegramModal && !telegramModal.classList.contains('hidden')) hideTelegram(); }, 10000);
-    });
-  </script>
+    };
+    ws.onerror = (err) => console.error('❌ WS error', err);
+    ws.onclose = () => console.warn('⚠️ WebSocket closed');
+  } catch (err) {
+    console.warn('WebSocket setup failed:', err);
+  }
+});
+</script>
 
   <script>
     /**********************************************
